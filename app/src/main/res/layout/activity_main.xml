@@ -3,33 +3,118 @@
 
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:textSize="30sp"
-        android:id="@+id/textView" />
+    android:background="@drawable/sleep">
 
-    <Button
-        android:id="@+id/start_button"
+    <LinearLayout
+        android:id="@+id/linearlayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <TextView
+            android:id="@+id/textView"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="right"
+            android:text="0"
+            android:textColor="#FFFFF0"
+            android:textSize="50sp" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="分贝"
+            android:textColor="#FFFFF0"
+            android:textSize="50sp" />
+    </LinearLayout>
+
+<!--灵敏度的三个控件-->
+    <LinearLayout
+        android:id="@+id/volLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="启动检测"
-        android:layout_above="@+id/stop_button"
-        android:layout_toEndOf="@+id/textView" />
-    <Button
-        android:id="@+id/stop_button"
+        android:layout_above="@+id/timeLayout"
+        android:layout_margin="5dp">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_margin="10dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/setVolText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_above="@+id/volLayout"
+                android:text="灵敏度"
+                android:layout_marginBottom="10dp"
+                android:textColor="#FFFFF0"
+                android:textSize="20sp" />
+            <SeekBar
+                android:id="@+id/setVolSeek"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical" />
+
+
+
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/start_button"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:text="启动检测" />
+
+    </LinearLayout>
+
+
+
+    <!-- 检测间隔的三个控件-->
+    <LinearLayout
+        android:id="@+id/timeLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="停止检测"
         android:layout_alignParentBottom="true"
-        android:layout_alignParentStart="true"
-        android:layout_marginBottom="91dp"
-         />
+        android:layout_margin="5dp">
 
 
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_margin="10dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
 
+            <TextView
+                android:id="@+id/setTimeText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="10dp"
+                android:text="检测间隔"
+
+                android:textColor="#FFFFF0"
+                android:textSize="20sp" />
+
+            <SeekBar
+                android:id="@+id/setTimeSeek"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:layout_weight="1" />
+
+
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/stop_button"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:text="停止检测" />
+    </LinearLayout>
 </RelativeLayout>
 
 
