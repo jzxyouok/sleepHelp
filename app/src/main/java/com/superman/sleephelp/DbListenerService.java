@@ -32,6 +32,7 @@ public class DbListenerService extends Service {
     int checkTime2;
     int volMax ;
     int sum;
+    boolean isMax;
     List<Integer> list;
     @Override
     public void onCreate() {
@@ -43,6 +44,7 @@ public class DbListenerService extends Service {
         notify.setContentTitle("午睡小助手");
         startForeground(1, notify.build());
         list = new ArrayList<>();
+
     }
     @Override
     public IBinder onBind(Intent intent) {
@@ -54,33 +56,31 @@ public class DbListenerService extends Service {
     }
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-
+        Log.d("service", "服务开始");
+        Intent bIntent=new Intent("newValue");
         vol = intent.getIntExtra("voll", 0);
         checkTime1 = intent.getExtras().getDouble("checkTime");
         checkTime2=(int)(checkTime1*10);
         volMax = intent.getIntExtra("volMax", 90);
-        Log.d("onStart服务","2");
         list.add(vol);
-        Log.d("vol", vol + "");
-        Log.d("checkTime2",checkTime2+"");
-        Log.d("list.size()",list.size()+"");
         if (list.size() == 31){
             list.clear();
         }
         if (list.size() == checkTime2) {
+            Log.d("service", "在list中");
             for (int array : list) {
 
                 sum = sum + array;
             }
             int lastValue = sum / list.size();
-           boolean isMax=lastValue >= volMax;
-            Log.d("ismax", isMax + "");
+           isMax=lastValue >= volMax;
+            Log.d("service", "isMax"+isMax);
             if (isMax) {
-                Intent bIntent=new Intent("newValue");
+
                 bIntent.putExtra("checked",true);
-                sendBroadcast(bIntent);
-                Log.d("发送震动广播", "" + "");
+                Log.d("service", "放入checked为真");
             }
+
             list.clear();
             sum=0;
         }
@@ -88,11 +88,9 @@ public class DbListenerService extends Service {
             AlarmManager manager = (AlarmManager) getSystemService(ALARM_SERVICE);
             int anHour = 100;
             long triggerAtTime = SystemClock.elapsedRealtime() + anHour;
-            Intent cIntent = new Intent("newValue");
-            PendingIntent pi = PendingIntent.getBroadcast(this, 0, cIntent, 0);
-            manager.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, triggerAtTime, pi);
-
-
+            PendingIntent pi = PendingIntent.getBroadcast(this, 0, bIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+            manager.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, triggerAtTime, pi );
+            Log.d("service", "服务结束检查放入的值"+bIntent.getBooleanExtra("checked",false)+"");
         return super.onStartCommand(intent, flags, startId);
     }
 }

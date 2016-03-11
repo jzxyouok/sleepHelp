@@ -18,6 +18,8 @@ import android.util.Log;
 import java.io.File;
 import java.io.IOException;
 import java.util.ServiceConfigurationError;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import android.media.MediaRecorder;
 import android.os.Handler;
@@ -44,8 +46,9 @@ public class MainActivity extends AppCompatActivity {
     TextView timeText;
     int voll;
     double newProgress = 1;
-    boolean isTrue=true;
-
+    boolean isTrue = true;
+    Timer timer;
+    MyTimerTask task;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -120,7 +123,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 status = TURNON;
-                isTrue=true;
+                isTrue = true;
                 //        动态注册广播接收器
                 IntentFilter intentFilter = new IntentFilter();
                 intentFilter.addAction("newValue");
@@ -173,20 +176,52 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    //  接收到广播就启动服务
-    class MyReceiver extends BroadcastReceiver {
+    class MyTimerTask extends TimerTask{
         @Override
-        public void onReceive(Context context, Intent intent) {
-            Log.d("是否在广播中震动", intent.getBooleanExtra("checked", false) + "");
-            if (intent.getBooleanExtra("checked", false)) {
-                sendNotify();
-            }
-
-            Intent ser = new Intent(context, DbListenerService.class);
+        public void run() {
+            Intent ser = new Intent(MainActivity.this, DbListenerService.class);
             ser.putExtra("voll", voll);
             ser.putExtra("volMax", seekBar1.getProgress());
             ser.putExtra("checkTime", timeSeek.getProgress() / 10d);
             startService(ser);
+            Log.d("activity", "延迟一秒启动服务成功");
+            timer.cancel();
+            task.cancel();
+        }
+    }
+
+//    TimerTask timerTask=new TimerTask() {
+//        @Override
+//        public void run() {
+//
+//
+//        }
+//    };
+
+    //  接收到广播就启动服务
+    class MyReceiver extends BroadcastReceiver {
+
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+
+            Log.d("activity",  "活动开始检查checked值："+intent.getBooleanExtra("checked", false) );
+            if (intent.getBooleanExtra("checked", false)) {
+                Log.d("activity", "checked值为真，发送震动通知");
+                sendNotify();
+                 task=new MyTimerTask();
+                timer = new Timer();
+                timer.schedule(task, 1000);
+                Log.d("activity", "checked值为真，准备延迟1秒启动服务3");
+
+            } else {
+                Log.d("activity4", "checked为假时立即启动服务");
+                Intent ser = new Intent(context, DbListenerService.class);
+                ser.putExtra("voll", voll);
+                ser.putExtra("volMax", seekBar1.getProgress());
+                ser.putExtra("checkTime", timeSeek.getProgress() / 10d);
+                startService(ser);
+            }
         }
     }
 
