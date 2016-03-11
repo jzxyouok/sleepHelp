@@ -147,7 +147,6 @@ public class MainActivity extends AppCompatActivity {
                     status = TURNOFF;
                     isTrue = false;
                     Intent stopIntent = new Intent(MainActivity.this, DbListenerService.class);
-                    Toast.makeText(MainActivity.this, "停止服务", Toast.LENGTH_SHORT).show();
                     stopService(stopIntent);
                     unregisterReceiver(myReceiver);
                 } else if (status == TURNOFF) {

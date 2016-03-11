@@ -60,7 +60,11 @@ public class DbListenerService extends Service {
         Intent bIntent=new Intent("newValue");
         vol = intent.getIntExtra("voll", 0);
         checkTime1 = intent.getExtras().getDouble("checkTime");
-        checkTime2=(int)(checkTime1*10);
+        if (checkTime1 == 0.0) {
+            checkTime2=1;
+        }else{
+        checkTime2=(int)(checkTime1*10);}
+
         volMax = intent.getIntExtra("volMax", 90);
         list.add(vol);
         if (list.size() == 31){
