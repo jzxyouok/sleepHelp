@@ -8,6 +8,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.Message;
@@ -39,14 +40,12 @@ public class MainActivity extends AppCompatActivity {
     MyReceiver myReceiver;
     TextView textView;
     Button stopButton;
-    int status = 2;
-    final int TURNON = 0;
-    final int TURNOFF = 1;
+    int status ;
+    final int TURNON = 1;
+    final int TURNOFF = 0;
     SeekBar timeSeek;
     TextView timeText;
     int voll;
-    double newProgress = 1;
-    boolean isTrue = true;
     Timer timer;
     MyTimerTask task;
     @Override
@@ -72,13 +71,12 @@ public class MainActivity extends AppCompatActivity {
         timeSeek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                newProgress = progress / 10d;
-                timeText.setText("检测间隔：" + newProgress + "秒");
+                timeText.setText("检测间隔：" + progress / 10d + "秒");
                 if (status == TURNON) {
                     Intent ser = new Intent(MainActivity.this, DbListenerService.class);
                     ser.putExtra("voll", voll);
                     ser.putExtra("volMax", seekBar1.getProgress());
-                    ser.putExtra("checkTime", newProgress);
+                    ser.putExtra("checkTime", progress / 10d);
                     startService(ser);
                 }
             }
@@ -123,7 +121,6 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 status = TURNON;
-                isTrue = true;
                 //        动态注册广播接收器
                 IntentFilter intentFilter = new IntentFilter();
                 intentFilter.addAction("newValue");
@@ -145,10 +142,16 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 if (status == TURNON) {
                     status = TURNOFF;
-                    isTrue = false;
                     Intent stopIntent = new Intent(MainActivity.this, DbListenerService.class);
                     stopService(stopIntent);
                     unregisterReceiver(myReceiver);
+                    if (timer != null) {
+                        timer.cancel();
+                    }
+                    if (task != null) {
+                        task.cancel();
+                    }
+
                 } else if (status == TURNOFF) {
                     Toast.makeText(MainActivity.this, "已经停止检测了哦~", Toast.LENGTH_SHORT).show();
                 }
@@ -159,13 +162,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showDb() {
+
         audioRecordDemo.getNoiseLevel(new Callback() {
             @Override
             public void onFinish(final double vol) {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        if (isTrue) {
+                        if (status==TURNON) {
                             textView.setText((int) vol + "");
                             voll = (int) vol;
                         }
@@ -237,9 +241,9 @@ public class MainActivity extends AppCompatActivity {
         NotificationManager manager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         Notification.Builder notify = new Notification.Builder(this);
         notify.setContentTitle("警告！");
-        notify.setContentText("检测到打呼");
+        notify.setContentText("声音太大了，啊啊啊。。。");
         notify.setTicker("ticker");
-        notify.setSmallIcon(R.drawable.common_full_open_on_phone);
+        notify.setSmallIcon(R.drawable.no);
         long[] vibrates = {000, 1000};
         notify.setVibrate(vibrates);
         manager.notify(1, notify.build());

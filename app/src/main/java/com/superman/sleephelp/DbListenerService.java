@@ -5,6 +5,7 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.os.Binder;
 import android.os.IBinder;
 import android.app.Notification;
@@ -42,7 +43,10 @@ public class DbListenerService extends Service {
         notify.setTicker("");
         notify.setContentText("打呼检测已启动。。。");
         notify.setContentTitle("午睡小助手");
+        notify.setSmallIcon(R.drawable.logo);
+
         startForeground(1, notify.build());
+
         list = new ArrayList<>();
 
     }
