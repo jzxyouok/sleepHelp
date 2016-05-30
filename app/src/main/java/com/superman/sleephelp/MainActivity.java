@@ -3,32 +3,20 @@ package com.superman.sleephelp;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.ServiceConnection;
-import android.graphics.Bitmap;
 import android.os.Bundle;
-import android.os.IBinder;
-import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
-import android.text.TextUtils;
 import android.util.Log;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.ServiceConfigurationError;
-import java.util.Timer;
-import java.util.TimerTask;
-
-import android.media.MediaRecorder;
-import android.os.Handler;
 import android.view.View;
 import android.widget.Button;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class MainActivity extends AppCompatActivity {
     AudioRecordDemo audioRecordDemo;
@@ -38,6 +26,7 @@ public class MainActivity extends AppCompatActivity {
     SeekBar seekBar1;
     Button startButton;
     MyReceiver myReceiver;
+    boolean isReg;
     TextView textView;
     Button stopButton;
     int status ;
@@ -48,10 +37,12 @@ public class MainActivity extends AppCompatActivity {
     int voll;
     Timer timer;
     MyTimerTask task;
+    Intent ser;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        Log.d("m", "88");
         audioRecordDemo = new AudioRecordDemo();
         startButton = (Button) findViewById(R.id.start_button);
         setVolText = (TextView) findViewById(R.id.setVolText);
@@ -68,15 +59,15 @@ public class MainActivity extends AppCompatActivity {
         progress2 = timeSeek.getProgress();
         setVolText.setText("灵敏度：" + progress1);
         timeText.setText("检测间隔：" + 1.0 + "秒");
+        ser = new Intent(MainActivity.this, DbListenerService.class);
         timeSeek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 timeText.setText("检测间隔：" + progress / 10d + "秒");
                 if (status == TURNON) {
-                    Intent ser = new Intent(MainActivity.this, DbListenerService.class);
-                    ser.putExtra("voll", voll);
-                    ser.putExtra("volMax", seekBar1.getProgress());
-                    ser.putExtra("checkTime", progress / 10d);
+                    ser.putExtra("voll", voll);//检测到的分贝值
+                    ser.putExtra("volMax", seekBar1.getProgress());//灵敏度
+                    ser.putExtra("checkTime", progress / 10d);//检测间隔
                     startService(ser);
                 }
             }
@@ -98,7 +89,6 @@ public class MainActivity extends AppCompatActivity {
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 setVolText.setText("灵敏度：" + progress);
                 if (status == TURNON) {
-                    Intent ser = new Intent(MainActivity.this, DbListenerService.class);
                     ser.putExtra("voll", voll);
                     ser.putExtra("volMax", seekBar1.getProgress());
                     ser.putExtra("checkTime", timeSeek.getProgress() / 10d);
@@ -126,12 +116,14 @@ public class MainActivity extends AppCompatActivity {
                 intentFilter.addAction("newValue");
                 myReceiver = new MyReceiver();
                 registerReceiver(myReceiver, intentFilter);
+                isReg=true;
                 showDb();
-                Intent ser = new Intent(MainActivity.this, DbListenerService.class);
+                Log.d("activity", "按下开始按钮1");
                 ser.putExtra("voll", voll);
                 ser.putExtra("volMax", seekBar1.getProgress());
                 ser.putExtra("checkTime", timeSeek.getProgress() / 10d);
                 startService(ser);
+                Log.d("activity", "按下开始按钮2");
             }
 
         });
@@ -140,11 +132,13 @@ public class MainActivity extends AppCompatActivity {
         stopButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+
                 if (status == TURNON) {
                     status = TURNOFF;
-                    Intent stopIntent = new Intent(MainActivity.this, DbListenerService.class);
-                    stopService(stopIntent);
+                    stopService(ser);
+                    if (isReg==true){
                     unregisterReceiver(myReceiver);
+                        isReg=false;}
                     if (timer != null) {
                         timer.cancel();
                     }
@@ -155,6 +149,7 @@ public class MainActivity extends AppCompatActivity {
                 } else if (status == TURNOFF) {
                     Toast.makeText(MainActivity.this, "已经停止检测了哦~", Toast.LENGTH_SHORT).show();
                 }
+                Log.d("activity", "按下停止按钮");
             }
         });
 
@@ -182,14 +177,16 @@ public class MainActivity extends AppCompatActivity {
     class MyTimerTask extends TimerTask{
         @Override
         public void run() {
-            Intent ser = new Intent(MainActivity.this, DbListenerService.class);
+//            Intent ser = new Intent(MainActivity.this, DbListenerService.class);
             ser.putExtra("voll", voll);
             ser.putExtra("volMax", seekBar1.getProgress());
             ser.putExtra("checkTime", timeSeek.getProgress() / 10d);
             startService(ser);
             Log.d("activity", "延迟一秒启动服务成功");
-            timer.cancel();
-            task.cancel();
+            if(timer!=null){
+            timer.cancel();}
+            if(task!=null){
+            task.cancel();}
         }
     }
 
@@ -219,7 +216,7 @@ public class MainActivity extends AppCompatActivity {
 
             } else {
                 Log.d("activity4", "checked为假时立即启动服务");
-                Intent ser = new Intent(context, DbListenerService.class);
+//                Intent ser = new Intent(context, DbListenerService.class);
                 ser.putExtra("voll", voll);
                 ser.putExtra("volMax", seekBar1.getProgress());
                 ser.putExtra("checkTime", timeSeek.getProgress() / 10d);
@@ -227,12 +224,18 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
-
     //    复写活动的销毁方法，在活动销毁时取消广播接收器的注册
     @Override
     public void onDestroy() {
         super.onDestroy();
-        unregisterReceiver(myReceiver);
+        if (isReg==true) {
+            unregisterReceiver(myReceiver);
+        }
+        if (status == TURNOFF) {
+            stopService(ser);
+        }
+        audioRecordDemo.isGetVoiceRun=false;
+
     }
 
 
@@ -241,8 +244,8 @@ public class MainActivity extends AppCompatActivity {
         NotificationManager manager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         Notification.Builder notify = new Notification.Builder(this);
         notify.setContentTitle("警告！");
-        notify.setContentText("声音太大了，啊啊啊。。。");
-        notify.setTicker("ticker");
+        notify.setContentText("声音太大了。。。");
+        notify.setTicker("警告!警告！！警告！！！");
         notify.setSmallIcon(R.drawable.no);
         long[] vibrates = {000, 1000};
         notify.setVibrate(vibrates);

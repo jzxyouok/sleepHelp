@@ -1,31 +1,16 @@
 package com.superman.sleephelp;
 
 import android.app.AlarmManager;
+import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
-import android.content.Context;
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.os.Binder;
 import android.os.IBinder;
-import android.app.Notification;
-import android.app.NotificationManager;
-import android.os.Bundle;
 import android.os.SystemClock;
-import android.provider.ContactsContract;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 
-import java.awt.font.TextAttribute;
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.zip.Inflater;
-
-import android.media.MediaRecorder;
-import android.os.Handler;
-import android.widget.TextView;
 
 public class DbListenerService extends Service {
     int vol;
@@ -37,11 +22,12 @@ public class DbListenerService extends Service {
     List<Integer> list;
     @Override
     public void onCreate() {
+        Log.d("service", "onCreate方法启动");
         super.onCreate();
         Notification.Builder notify = new Notification.Builder(this);
         notify.setSmallIcon(R.drawable.common_full_open_on_phone);
-        notify.setTicker("");
-        notify.setContentText("打呼检测已启动。。。");
+        notify.setTicker("前台服务成功开启");
+        notify.setContentText("声音检测已启动。。。");
         notify.setContentTitle("午睡小助手");
         notify.setSmallIcon(R.drawable.logo);
 
@@ -71,9 +57,14 @@ public class DbListenerService extends Service {
 
         volMax = intent.getIntExtra("volMax", 90);
         list.add(vol);
+        /*容错使用，万一超过31（一般情况下为30），直接初始化清空*/
         if (list.size() == 31){
             list.clear();
         }
+
+       /*检测逻辑为在多少秒内的平均分贝值超过了设定的灵敏度，即判定为需要报警
+       * 每隔0.1秒启动一次服务，所以指定泛型int使用一个list作为容器存放这段时间
+       * 内的声音数据，当这个list的长度对等于设定的检测时间时，去求平均值与设定的灵敏度对比。*/
         if (list.size() == checkTime2) {
             Log.d("service", "在list中");
             for (int array : list) {
@@ -81,7 +72,7 @@ public class DbListenerService extends Service {
                 sum = sum + array;
             }
             int lastValue = sum / list.size();
-           isMax=lastValue >= volMax;
+           isMax=(lastValue >= volMax);
             Log.d("service", "isMax"+isMax);
             if (isMax) {
 
@@ -94,7 +85,7 @@ public class DbListenerService extends Service {
         }
 //每隔0.1秒发送广播
             AlarmManager manager = (AlarmManager) getSystemService(ALARM_SERVICE);
-            int anHour = 100;
+            int anHour = 100;//100毫秒即为0.1秒
             long triggerAtTime = SystemClock.elapsedRealtime() + anHour;
             PendingIntent pi = PendingIntent.getBroadcast(this, 0, bIntent, PendingIntent.FLAG_UPDATE_CURRENT);
             manager.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, triggerAtTime, pi );
