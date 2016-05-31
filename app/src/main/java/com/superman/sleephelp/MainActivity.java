@@ -230,7 +230,7 @@ public class MainActivity extends AppCompatActivity {
         super.onDestroy();
         if (isReg==true) {
             unregisterReceiver(myReceiver);
-            
+
         }
         if (status == TURNOFF) {
             stopService(ser);
